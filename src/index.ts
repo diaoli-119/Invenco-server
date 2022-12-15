@@ -1,7 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import { sign, verify } from "jsonwebtoken";
-import * as sqlite from "sqlite3";
 import dotenv from "dotenv";
+import { db } from "./dbProcess";
 
 dotenv.config();
 
@@ -41,29 +41,6 @@ app.post("/login", (req, res) => {
   refreshTokens.push(refreshToken);
   res.json({ accessToken: accessToken, refreshToken: refreshToken });
 });
-
-const db: sqlite.Database = new sqlite.Database(
-  "./emp_database.db",
-  (err: Error | null) => {
-    if (err) {
-      console.error("Erro opening database " + err.message);
-    } else {
-      db.run(
-        "CREATE TABLE employees( \
-          id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
-          name NVARCHAR(20)  NOT NULL,\
-          age INTEGER NOT NULL\
-      )",
-        (err) => {
-          if (err) {
-            console.log("Table already exists.");
-            return;
-          }
-        }
-      );
-    }
-  }
-);
 
 app.get("/employees", (req: Request, res: Response) => {
   const sqlStr: string = "SELECT * FROM employees";
