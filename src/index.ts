@@ -1,10 +1,7 @@
 import express, { Express, Request, Response } from "express";
 import { sign, verify } from "jsonwebtoken";
+import * as sqlite from "sqlite3";
 import dotenv from "dotenv";
-
-type UserType = {
-  name: string | number;
-};
 
 dotenv.config();
 
@@ -24,14 +21,13 @@ app.post("/token", (req: Request, res: Response) => {
   verify(refreshToken, refreshTokenSecretKey, (err, user) => {
     if (err) return res.sendStatus(403);
     //@ts-ignore
-    const accessToken = generateAccessToken({ name: user?.iat });
+    const accessToken = generateAccessToken({ name: user.name });
     res.json({ accessToken: accessToken });
   });
 });
 
 // middleware
 const generateAccessToken = (user: any) => {
-  console.log("user =", user);
   return sign(user, accessTokenSecretKey, { expiresIn: "15s" });
 };
 
@@ -44,6 +40,46 @@ app.post("/login", (req, res) => {
   const refreshToken = sign(user, refreshTokenSecretKey);
   refreshTokens.push(refreshToken);
   res.json({ accessToken: accessToken, refreshToken: refreshToken });
+});
+
+const db: sqlite.Database = new sqlite.Database(
+  "./emp_database.db",
+  (err: Error | null) => {
+    if (err) {
+      console.error("Erro opening database " + err.message);
+    } else {
+      db.run(
+        "CREATE TABLE employees( \
+          id INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,\
+          name NVARCHAR(20)  NOT NULL,\
+          age INTEGER NOT NULL\
+      )",
+        (err) => {
+          if (err) {
+            console.log("Table already exists.");
+            return;
+          }
+        }
+      );
+    }
+  }
+);
+
+app.get("/employees", (req: Request, res: Response) => {
+  const sqlStr: string = "SELECT * FROM employees";
+  db.all(sqlStr, [], (err: Error, rows: any) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.status(200).json({ rows });
+  });
+});
+
+app.post("/createemployees", (req: Request, res: Response) => {
+  let insert = "INSERT INTO employees (name, age) VALUES (?,?)";
+  db.run(insert, [req.body?.name, req.body?.age]);
+  res.status(200).json({ succ: "OK" });
 });
 
 app.listen(port, () => {
