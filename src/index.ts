@@ -5,7 +5,7 @@ import { db } from "./dbProcess";
 
 dotenv.config();
 
-const app: Express = express();
+export const app: Express = express();
 const port: string = process.env.PORT || "5001";
 const refreshTokenSecretKey: string = process.env.REFRESH_TOKEN_SECRET ?? "";
 const accessTokenSecretKey: string = process.env.ACCESS_TOKEN_SECRET ?? "";
@@ -22,7 +22,7 @@ app.post("/token", (req: Request, res: Response) => {
     if (err) return res.sendStatus(403);
     //@ts-ignore
     const accessToken = generateAccessToken({ name: user.name });
-    res.json({ accessToken: accessToken });
+    res.status(200).json({ accessToken: accessToken });
   });
 });
 
@@ -33,13 +33,16 @@ const generateAccessToken = (user: any) => {
 
 app.post("/login", (req, res) => {
   // Authenticate User
-  const username = req.body.username;
-  const user = { name: username };
-  console.log("username =", req.body);
+  const employeeName = req.body.employeeName;
+  const user = { name: employeeName };
   const accessToken = generateAccessToken(user);
   const refreshToken = sign(user, refreshTokenSecretKey);
   refreshTokens.push(refreshToken);
-  res.json({ accessToken: accessToken, refreshToken: refreshToken });
+  res.status(200).json({
+    accessToken: accessToken,
+    refreshToken: refreshToken,
+    employeeName: employeeName,
+  });
 });
 
 app.get("/employees", (req: Request, res: Response) => {
