@@ -56,6 +56,17 @@ app.get("/employees", (req: Request, res: Response) => {
   });
 });
 
+app.post("/employee/:id", (req: Request, res: Response) => {
+  const sqlStr: string = `SELECT * FROM employees where id = ${req.body.id}`;
+  db.all(sqlStr, [], (err: Error, rows: any) => {
+    if (err) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    res.status(200).json({ rows });
+  });
+});
+
 app.post("/createemployees", (req: Request, res: Response) => {
   let insert = "INSERT INTO employees (name, age) VALUES (?,?)";
   db.run(insert, [req.body?.name, req.body?.age]);
