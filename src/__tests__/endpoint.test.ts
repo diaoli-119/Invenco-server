@@ -52,6 +52,21 @@ describe("test request endpoint", () => {
     expect(body).toEqual({ succ: "OK" });
   });
 
+  it("get a specific employee", async () => {
+    const requiredEmployee = { id: 3 };
+    const { statusCode, body } = await supertest(app)
+      .post("/employee/:id")
+      .send(requiredEmployee);
+    expect(statusCode).toBe(200);
+    expect(body.rows).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: body.rows[0].id,
+        }),
+      ])
+    );
+  });
+
   it("get all employees", async () => {
     const { statusCode, body } = await supertest(app).get("/employees");
     expect(statusCode).toBe(200);
